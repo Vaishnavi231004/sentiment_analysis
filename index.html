@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="page-container">
+
+    <!-- Left Main Section -->
+    <div class="hero-container">
+        <div class="card">
+            <h1>Sentiment Analyzer</h1>
+            <p>Whether it’s positive, negative, or neutral, get instant sentiment insights with confidence scores to understand the mood of your words.</p>
+
+            <!-- Sentiment Meter -->
+            <div id="sentiment-meter" class="hidden">
+                <div class="meter-track">
+                    <div class="meter-fill"></div>
+                </div>
+                <div class="meter-labels">
+                    <span>NEGATIVE</span>
+                    <span>NEUTRAL</span>
+                    <span>POSITIVE</span>
+                </div>
+            </div>
+
+            <!-- Text Input -->
+            <form id="sentiment-form">
+                <textarea id="text-input" placeholder="Type your text here..." required></textarea>
+                <button type="submit">Analyze</button>
+            </form>
+
+            <!-- Result -->
+            <div id="result" class="hidden">
+                <p><strong>Sentiment:</strong> <span id="sentiment"></span></p>
+                <p><strong>Confidence:</strong> <span id="score"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right About Section -->
+    <div class="about-section">
+        <h2>About This Analyzer</h2>
+        <p>
+            This Sentiment Analyzer uses advanced AI to detect the emotional tone of your text.
+            Whether your text is positive, negative, or neutral, it provides real-time feedback
+            with a visually engaging sentiment meter. Perfect for understanding moods in messages, reviews, or social media content.
+        </p>
+    </div>
+
+</div>
+
+<script>
+    const form = document.getElementById("sentiment-form");
+    const resultDiv = document.getElementById("result");
+    const sentimentSpan = document.getElementById("sentiment");
+    const scoreSpan = document.getElementById("score");
+    const meterFill = document.querySelector(".meter-fill");
+    const meterDiv = document.getElementById("sentiment-meter");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = document.getElementById("text-input").value;
+
+        const res = await fetch("/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+        if (data.error) {
+            sentimentSpan.textContent = "Error";
+            scoreSpan.textContent = data.error;
+            meterFill.style.width = "0%";
+            document.getElementById("text-input").style.backgroundColor = "#fff";
+        } else {
+            sentimentSpan.textContent = data.sentiment;
+            scoreSpan.textContent = (data.score * 100).toFixed(2) + "%";
+
+            let width = 0;
+            let color = "#fff"; // default white
+            if (data.sentiment === "negative") {
+                width = data.score * 100 * 0.33;
+                color = `rgba(244,67,54, ${0.2 + 0.6 * data.score})`; // red shades
+            }
+            else if (data.sentiment === "neutral") {
+                width = 33 + data.score * 100 * 0.33;
+                color = `rgba(255,193,7, ${0.2 + 0.6 * data.score})`; // yellow shades
+            }
+            else if (data.sentiment === "positive") {
+                width = 66 + data.score * 100 * 0.34;
+                color = `rgba(76,175,80, ${0.2 + 0.6 * data.score})`; // green shades
+            }
+
+            meterFill.style.width = width + "%";
+            document.getElementById("text-input").style.backgroundColor = color;
+            meterDiv.classList.remove("hidden");
+        }
+        resultDiv.classList.remove("hidden");
+    });
+
+</script>
+
+</body>
+</html>
